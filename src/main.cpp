@@ -62,7 +62,7 @@ int main() {
             }
 
             if (deviceType == CL_DEVICE_TYPE_CPU) {
-                cpu = device;
+                cpu = dev;
             }
         }
     }
