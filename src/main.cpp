@@ -37,25 +37,41 @@ int main() {
     if (!ocl_init())
         throw std::runtime_error("Can't init OpenCL driver!");
 
-    // TODO 1 По аналогии с предыдущим заданием узнайте, какие есть устройства, и выберите из них какое-нибудь
+    // По аналогии с предыдущим заданием узнайте, какие есть устройства, и выберите из них какое-нибудь
     // (если в списке устройств есть хоть одна видеокарта - выберите ее, если нету - выбирайте процессор)
     cl_uint platformsCount = 0;
     OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
     std::vector<cl_platform_id> platforms(platformsCount);
     OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
-    std::vector<cl_device_id> devices{};
+    cl_device_id device = nullptr;
+    cl_device_id cpu = nullptr;
     for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
         cl_platform_id platform = platforms[platformIndex];
         cl_uint devicesCount = 0;
         OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
-        auto size = devices.size();
-        devices.resize(size + devicesCount);
-        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data() + size, nullptr));
+        std::vector<cl_device_id> devices(devicesCount);
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
+        for (int deviceIndex = 0; deviceIndex < devicesCount; deviceIndex++) {
+            cl_device_id dev = devices[deviceIndex];
+
+            cl_device_type deviceType = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(dev, CL_DEVICE_TYPE, sizeof(cl_device_type), &deviceType, nullptr));
+
+            if (deviceType == CL_DEVICE_TYPE_GPU) {
+                device = dev;
+            }
+
+            if (deviceType == CL_DEVICE_TYPE_CPU) {
+                cpu = device;
+            }
+        }
     }
-    if (devices.empty()) {
+    if (!device) {
+        device = cpu;
+    }
+    if (!device) {
         throw std::runtime_error{"Can't find OpenCl devices"};
     }
-    cl_device_id device = devices[0];
     // Создайте контекст с выбранным устройством
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Contexts -> clCreateContext
     // Не забывайте проверять все возвращаемые коды на успешность (обратите внимание, что в данном случае метод возвращает
