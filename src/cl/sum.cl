@@ -19,9 +19,10 @@ __kernel void sum2(__global unsigned int *a, __global unsigned int* res,  unsign
     unsigned int sum = 0;
     for (int i = 0; i < VALUES_PER_WORK_ITEM; i++) {
         int idx = id * VALUES_PER_WORK_ITEM + i;
-        if (idx < n) {
-            sum += a[idx];
+        if (idx >= n) {
+           break;
         }
+        sum += a[idx];
     }
     atomic_add(res, sum);
 }
@@ -33,9 +34,10 @@ __kernel void sum3(__global unsigned int *a, __global unsigned int* res,  unsign
     unsigned int sum = 0;
     for (int i = 0; i < VALUES_PER_WORK_ITEM; i++) {
         int idx = group_id * group_size * VALUES_PER_WORK_ITEM + i * group_size + local_id;
-        if (idx < n) {
-            sum += a[idx];
+        if (idx >= n) {
+          break;
         }
+        sum += a[idx];
     }
     atomic_add(res, sum);
 }
@@ -44,7 +46,11 @@ __kernel void sum4(__global unsigned int *a, __global unsigned int* res,  unsign
     int local_id = get_local_id(0);
     int global_id = get_global_id(0);
     __local int local_a[WORK_GROUP_SIZE];
-    local_a[local_id] = a[global_id];
+    if (global_id < n) {
+      local_a[local_id] = a[global_id];
+    } else {
+      local_a[local_id] = 0;
+    }
     barrier(CLK_LOCAL_MEM_FENCE);
     if (!local_id) {
         unsigned int sum = 0;
@@ -59,7 +65,11 @@ __kernel void sum5(__global unsigned int *a, __global unsigned int* res,  unsign
     int local_id = get_local_id(0);
     int global_id = get_global_id(0);
     __local int local_a[WORK_GROUP_SIZE];
-    local_a[local_id] = a[global_id];
+    if (global_id < n) {
+      local_a[local_id] = a[global_id];
+    } else {
+      local_a[local_id] = 0;
+    }
     barrier(CLK_LOCAL_MEM_FENCE);
     for (int i = WORK_GROUP_SIZE; i > 1; i /= 2) {
         if (2 * local_id < i) {
