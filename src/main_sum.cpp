@@ -94,8 +94,8 @@ int main(int argc, char **argv)
         unsigned int globalWorkSize = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
         const size_t iters = 100;
         sum(device, as, "sum1", iters, globalWorkSize, reference_sum, n);
-        sum(device, as, "sum2", iters, globalWorkSize, reference_sum, n);
-        sum(device, as, "sum3", iters, globalWorkSize, reference_sum, n);
+        sum(device, as, "sum2", iters, globalWorkSize / 32, reference_sum, n);
+        sum(device, as, "sum3", iters, globalWorkSize / 32, reference_sum, n);
         sum(device, as, "sum4", iters, globalWorkSize, reference_sum, n);
         sum(device, as, "sum5", iters, globalWorkSize, reference_sum, n);
     }
