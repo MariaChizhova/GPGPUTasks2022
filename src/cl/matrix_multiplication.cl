@@ -27,7 +27,9 @@ __kernel void matrix_multiplication1(__global float* a, __global float* b, __glo
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
-    c[global_j * n + global_i] = sum;
+    if (global_j < m && global_i < n) {
+      c[global_j * n + global_i] = sum;
+    }
 }
 
 
@@ -50,8 +52,8 @@ __kernel void matrix_multiplication2(__global float* a, __global float* b, __glo
 
     for (int tileK = 0; tileK * TILE_SIZE < k; ++tileK) {
         for (int w = 0; w < THREAD_WORK; w++) {
-            tileA[local_j][local_i + w * TILE_SIZE / THREAD_WORK] = a[global_j * k + TILE_SIZE * tileK + local_i + w * TILE_SIZE / THREAD_WORK];
-            tileB[local_j][local_i + w * TILE_SIZE / THREAD_WORK] = b[(TILE_SIZE * tileK + local_j) * n + global_i + w * TILE_SIZE / THREAD_WORK];
+             tileA[local_j][local_i + w * TILE_SIZE / THREAD_WORK] = a[global_j * k + TILE_SIZE * tileK + local_i + w * TILE_SIZE / THREAD_WORK];
+             tileB[local_j][local_i + w * TILE_SIZE / THREAD_WORK] = b[(TILE_SIZE * tileK + local_j) * n + global_i + w * TILE_SIZE / THREAD_WORK];
         }
 
       barrier(CLK_LOCAL_MEM_FENCE);
@@ -66,6 +68,8 @@ __kernel void matrix_multiplication2(__global float* a, __global float* b, __glo
       barrier(CLK_LOCAL_MEM_FENCE);
     }
     for (int w = 0; w < THREAD_WORK; w++) {
-        c[global_j * n + global_i + w * TILE_SIZE / THREAD_WORK] = sum[w];
+        if (global_j < m && global_i < n) {
+          c[global_j * n + global_i + w * TILE_SIZE / THREAD_WORK] = sum[w];
+        }
     }
 }
